@@ -1,6 +1,38 @@
 GRAM
 =========================================
 
+## Note by Allan/Yutaro
+
+https://docs.google.com/document/d/1CJEZ0bXQGv43VIBTJfg2hsaMSgJjJWIG_f6aW9rweDw/edit#
+
+### Datasets
+- ADMISSIONS.csv
+- DIAGNOSES_ICD.csv
+- ccs_multi_dx_tool_2015.csv
+
+### Basic workflows
+
+confirmed python2.7 works.
+not yet python3.x
+
+```
+# Data preprocessing
+$ python process_mimic.py ADMISSIONS.csv DIAGNOSES_ICD.csv output
+
+# Build files that contain the ancestor information of each medical code
+$ python build_trees.py ccs_multi_dx_tool_2015.csv output.seqs output.types output2
+
+# Run GRAM (train)
+$ python gram.py output2.seqs output.3digitICD9.seqs output2 output3
+
+# Pretrain the code embedding
+$ python create_glove_comap.py output2.seqs output2 output_pretrain
+$ python glove.py cooccurrenceMap.pk output2 output_pretrain2
+$ python gram.py <seqs file> <3digitICD9.seqs file> <tree file prefix> <output path> --embed_file <embedding path> --embed_size <embedding dimension>
+``` 
+
+=========================================
+
 GRAM is a prediction framework that can use the domain knowledge in the form of directed acyclic graph (DAG).
 Domain knowedge is incorporated in the training process using the [attention mechanism](https://arxiv.org/abs/1409.0473). 
 By introducing well established knoweldge into the training process, we can learn high quality representations of medical concepts that lead to more accurate predictions. 
