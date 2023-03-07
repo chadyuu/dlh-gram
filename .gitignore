@@ -1,0 +1,7 @@
+*.pk
+*.seqs
+*.types
+*.log
+*.npz
+*.pids
+*.dates
