@@ -15,18 +15,56 @@ https://docs.google.com/document/d/1CJEZ0bXQGv43VIBTJfg2hsaMSgJjJWIG_f6aW9rweDw/
 confirmed python2.7 works.
 not yet python3.x
 
+#### Data preprocessing
+
 ```
-# Data preprocessing
 $ python process_mimic.py ADMISSIONS.csv DIAGNOSES_ICD.csv output
+```
 
-# Build files that contain the ancestor information of each medical code
+output
+
+- output.3digitICD9.seqs
+- output.3digitICD9.types
+- output.dates
+- output.pids
+- output.seqs
+- output.types
+
+#### Build files that contain the ancestor information of each medical code
+
+```
 $ python build_trees.py ccs_multi_dx_tool_2015.csv output.seqs output.types output2
+```
+output
+- output2.level1.pk
+- output2.level2.pk
+- output2.level3.pk
+- output2.level4.pk
+- output2.level5.pk
+- output2.seqs
+- output2.types
 
-# Run GRAM (train)
+
+#### Run GRAM (train)
+```
 $ python gram.py output2.seqs output.3digitICD9.seqs output2 output3
+```
+output
+- output3.*.npz
 
-# Pretrain the code embedding
+
+### Pretrain the code embedding
+```
 $ python create_glove_comap.py output2.seqs output2 output_pretrain
+``` 
+output
+- cooccurrenceMa.pk
+- output_pretrain2.0.npz
+- output_pretrain2.1.npz
+
+
+*Have not run the following code.
+``` 
 $ python glove.py cooccurrenceMap.pk output2 output_pretrain2
 $ python gram.py <seqs file> <3digitICD9.seqs file> <tree file prefix> <output path> --embed_file <embedding path> --embed_size <embedding dimension>
 ``` 
