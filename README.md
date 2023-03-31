@@ -5,6 +5,15 @@ GRAM
 
 https://docs.google.com/document/d/1CJEZ0bXQGv43VIBTJfg2hsaMSgJjJWIG_f6aW9rweDw/edit#
 
+Our to-do list is like
+1. look at and understand the given code
+2. implement the preprocessing code with y as binary
+3. fix the given code to accord with the binary prediction
+4. calculate AUC for GRAM
+5. implement an RNN
+6. calculate AUC for RNN
+7. conduct ablations by the final submission
+
 ### Datasets
 - ADMISSIONS.csv
 - DIAGNOSES_ICD.csv
@@ -54,6 +63,7 @@ output
 
 
 ### Pretrain the code embedding
+This is for GRAM+ and RNN+, so we do not need to pretrain the code embedding.
 ```
 $ python create_glove_comap.py output2.seqs output2 output_pretrain
 ``` 
