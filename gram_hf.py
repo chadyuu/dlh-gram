@@ -3,7 +3,7 @@
 # For bug report, please contact author using the email address
 #################################################################
 
-# $ python gram_hf.py output2.seqs hfs.pkl output2 test
+# $ python gram_hf.py output2/output2.seqs hfs.pkl output2/output2 gram_hf --train_ratio 0.8
 
 import sys, random, time, argparse
 from collections import OrderedDict
@@ -14,15 +14,6 @@ import theano
 import theano.tensor as T
 from theano import config
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
-
-from theano.tensor.nnet import categorical_crossentropy
-from datetime import datetime
-
-import os
-os.environ['THEANO_FLAGS'] = 'optimizer=None'
-
-_TEST_RATIO = 0.2
-_VALIDATION_RATIO = 0.1
 
 def unzip(zipped):
     new_params = OrderedDict()
@@ -111,21 +102,18 @@ def generate_attention(tparams, leaves, ancestors):
     preAttention = T.dot(mlpOutput, tparams['v_attention'])
     attention = T.nnet.softmax(preAttention)
     return attention
-    
-def softmax_layer(tparams, emb):
-    nom = T.exp(T.dot(emb, tparams['W_output']) + tparams['b_output'])
-    denom = nom.sum(axis=2, keepdims=True)
-    output = nom / denom
-    return output
-    
+
+def sigmoid_layer(tparams, emb):
+    z = T.dot(emb, tparams['W_output']) + tparams['b_output']
+    return T.nnet.sigmoid(z)
+
 def build_model(tparams, leavesList, ancestorsList, options):
     dropoutRate = options['dropoutRate']
     trng = RandomStreams(123)
     use_noise = theano.shared(numpy_floatX(0.))
 
-    x = T.tensor3('x', dtype=config.floatX) # 3-dimension matrix
-    #y = T.tensor3('y', dtype=config.floatX)
-    y = T.matrix('y', dtype='int32') # 1-dimension integer
+    x = T.tensor3('x', dtype=config.floatX)
+    y = T.matrix('y', dtype=config.floatX)
     mask = T.matrix('mask', dtype=config.floatX)
     lengths = T.vector('lengths', dtype=config.floatX)
 
@@ -142,21 +130,20 @@ def build_model(tparams, leavesList, ancestorsList, options):
 
     x_emb = T.tanh(T.dot(x, emb))
     hidden = gru_layer(tparams, x_emb, options)
-    hidden = dropout_layer(hidden, use_noise, trng, dropoutRate)
-    y_hat = softmax_layer(tparams, hidden) * mask[:,:,None]
+    # Only get the last hidden layer for HF prediction
+    hidden = dropout_layer(hidden, use_noise, trng, dropoutRate)[-1]
+    y_hat = sigmoid_layer(tparams, hidden)
 
     logEps = 1e-8
     cross_entropy = -(y * T.log(y_hat + logEps) + (1. - y) * T.log(1. - y_hat + logEps))
-    output_loglikelihood = cross_entropy.sum(axis=2).sum(axis=0) / lengths
-    cost_noreg = T.mean(output_loglikelihood)
+    cost_noreg = T.mean(cross_entropy)
 
     if options['L2'] > 0.:
         cost = cost_noreg + options['L2'] * ((tparams['W_output']**2).sum() + (tparams['W_attention']**2).sum() + (tparams['v_attention']**2).sum())
-    #cost_noreg = T.mean(categorical_crossentropy(y_hat, y))
 
     return use_noise, x, y, mask, lengths, cost, cost_noreg, y_hat
 
-def load_data(seqFile, labelFile, timeFile=''):
+def load_data(seqFile, labelFile, outfile, timeFile=''):
     sequences = np.array(pickle.load(open(seqFile, 'rb')))
     labels = np.array(pickle.load(open(labelFile, 'rb')))
     if len(timeFile) > 0:
@@ -210,6 +197,7 @@ def load_data(seqFile, labelFile, timeFile=''):
     train_set = (train_set_x, train_set_y, train_set_t)
     valid_set = (valid_set_x, valid_set_y, valid_set_t)
     test_set = (test_set_x, test_set_y, test_set_t)
+    pickle.dump(test_set, open(outfile + '_' + str(round(_TRAIN_RATIO,2)) + '.test_set', 'wb'), -1)
 
     return train_set, valid_set, test_set
 
@@ -221,7 +209,7 @@ def adadelta(tparams, grads, x, y, mask, lengths, cost):
     zgup = [(zg, g) for zg, g in zip(zipped_grads, grads)]
     rg2up = [(rg2, 0.95 * rg2 + 0.05 * (g ** 2)) for rg2, g in zip(running_grads2, grads)]
 
-    f_grad_shared = theano.function([x, y, mask, lengths], cost, updates=zgup + rg2up, name='adadelta_f_grad_shared')
+    f_grad_shared = theano.function([x, y, mask, lengths], cost, updates=zgup + rg2up, name='adadelta_f_grad_shared', on_unused_input='warn')
 
     updir = [-T.sqrt(ru2 + 1e-6) / T.sqrt(rg2 + 1e-6) * zg for zg, ru2, rg2 in zip(zipped_grads, running_up2, running_grads2)]
     ru2up = [(ru2, 0.95 * ru2 + 0.05 * (ud ** 2)) for ru2, ud in zip(running_up2, updir)]
@@ -232,39 +220,42 @@ def adadelta(tparams, grads, x, y, mask, lengths, cost):
     return f_grad_shared, f_update
 
 def padMatrix(seqs, labels, options):
-    lengths = np.array([len(seq) for seq in seqs]) - 1
+    lengths = np.array([len(seq) for seq in seqs]) # need all visits data
     n_samples = len(seqs)
     maxlen = np.max(lengths)
 
     x = np.zeros((maxlen, n_samples, options['inputDimSize'])).astype(config.floatX)
-    #y = np.zeros((maxlen, n_samples, options['numClass'])).astype(config.floatX)
+    y = np.zeros((n_samples, options['numClass'])).astype(config.floatX)
     mask = np.zeros((maxlen, n_samples)).astype(config.floatX)
 
-    for idx, (seq, lseq) in enumerate(zip(seqs,labels)):
-        for xvec, subseq in zip(x[:,idx,:], seq[:-1]): xvec[subseq] = 1.
-        #for yvec, subseq in zip(y[:,idx,:], lseq[1:]): yvec[subseq] = 1.
-        mask[:lengths[idx], idx] = 1.
+    for idx, seq in enumerate(seqs):
+        for xvec, subseq in zip(x[:,idx,:], seq):
+            xvec[subseq] = 1.
 
-    lengths = np.array(lengths, dtype=config.floatX)
+        mask[:lengths[idx], idx] = 1
 
-    #return x, y, mask, lengths
-    return x, mask, lengths
+    for idx, label in enumerate(labels):
+        y[idx] = label
 
-def calculate_cost(test_model, dataset, options):
+    return x, y, mask, lengths
+
+def calculate_cost(test_model, dataset, options, test_probs=None):
     batchSize = options['batchSize']
     n_batches = int(np.ceil(float(len(dataset[0])) / float(batchSize)))
     costSum = 0.0
     dataCount = 0
+    out_probs = []
     for index in xrange(n_batches):
         batchX = dataset[0][index*batchSize:(index+1)*batchSize]
         batchY = dataset[1][index*batchSize:(index+1)*batchSize]
-        #x, y, mask, lengths = padMatrix(batchX, batchY, options)
-        x, mask, lengths = padMatrix(batchX, batchY, options)
-        y = np.asarray(batchY, dtype=np.int32).reshape(-1,1)
+        x, y, mask, lengths = padMatrix(batchX, batchY, options)
         cost = test_model(x, y, mask, lengths)
         costSum += cost * len(batchX)
         dataCount += len(batchX)
-    return costSum / dataCount
+        if test_probs is not None:
+            batch_probs = test_probs(x, y, mask, lengths)
+            out_probs.extend(batch_probs)
+    return costSum / dataCount, out_probs
 
 def print2file(buf, outFile):
     outfd = open(outFile, 'a')
@@ -292,41 +283,49 @@ def train_GRAM(
     embDimSize= 100,
     hiddenDimSize=200,
     attentionDimSize=200,
-    max_epochs=1,#100,
+    max_epochs=100,
     L2=0.,
-    numClass=26679,
+    numClass=1,
     batchSize=100,
     dropoutRate=0.5,
     logEps=1e-8,
-    verbose=False
+    verbose=False,
+    train_ratio=0.7
 ):
-    print(datetime.now())
-
     options = locals().copy()
+
+    # control train_ratio
+    global _TEST_RATIO
+    global _TRAIN_RATIO
+    global _VALIDATION_RATIO
+    _TEST_RATIO = 0.2
+    _TRAIN_RATIO = train_ratio
+    _VALIDATION_RATIO = 1 - _TEST_RATIO - _TRAIN_RATIO
 
     leavesList = []
     ancestorsList = []
-    for i in range(5, 0, -1): # An ICD9 diagnosis code can have at most five ancestors (including the artificial root) when using CCS multi-level grouper. 
+    for i in range(5, 0, -1): # An ICD9 diagnosis code can have at most five ancestors (including the artificial root) when using CCS multi-level grouper.
         leaves, ancestors = build_tree(treeFile+'.level'+str(i)+'.pk')
         sharedLeaves = theano.shared(leaves, name='leaves'+str(i))
         sharedAncestors = theano.shared(ancestors, name='ancestors'+str(i))
         leavesList.append(sharedLeaves)
         ancestorsList.append(sharedAncestors)
-    
+
     print 'Building the model ... ',
     params = init_params(options)
     tparams = init_tparams(params)
     use_noise, x, y, mask, lengths, cost, cost_noreg, y_hat =  build_model(tparams, leavesList, ancestorsList, options)
-    get_cost = theano.function(inputs=[x, y, mask, lengths], outputs=cost_noreg, name='get_cost')
+    get_cost = theano.function(inputs=[x, y, mask, lengths], outputs=cost_noreg, name='get_cost', on_unused_input='warn')
+    get_probs = theano.function(inputs=[x, y, mask, lengths], outputs=y_hat, name='get_probs', on_unused_input='warn')
     print 'done!!'
-    
+
     print 'Constructing the optimizer ... ',
     grads = T.grad(cost, wrt=tparams.values())
     f_grad_shared, f_update = adadelta(tparams, grads, x, y, mask, lengths, cost)
     print 'done!!'
 
     print 'Loading data ... ',
-    trainSet, validSet, testSet = load_data(seqFile, labelFile)
+    trainSet, validSet, testSet = load_data(seqFile, labelFile, outFile)
     n_batches = int(np.ceil(float(len(trainSet[0])) / float(batchSize)))
     print 'done!!'
 
@@ -345,13 +344,8 @@ def train_GRAM(
             use_noise.set_value(1.)
             batchX = trainSet[0][index*batchSize:(index+1)*batchSize]
             batchY = trainSet[1][index*batchSize:(index+1)*batchSize]
-            #x, y, mask, lengths = padMatrix(batchX, batchY, options)
-            x, mask, lengths = padMatrix(batchX, batchY, options)
-            y = np.asarray(batchY, dtype=np.int32).reshape(-1,1)
-            #y = np.asarray(batchY, dtype=np.int32)
-            #print(x.shape) # (1, 100, 4894)
-            #print(y.shape) # (100, 1)
-            costValue = f_grad_shared(x, y, mask, lengths) # error
+            x, y, mask, lengths = padMatrix(batchX, batchY, options)
+            costValue = f_grad_shared(x, y, mask, lengths)
             f_update()
             costVec.append(costValue)
 
@@ -362,8 +356,8 @@ def train_GRAM(
         duration = time.time() - startTime
         use_noise.set_value(0.)
         trainCost = np.mean(costVec)
-        validCost = calculate_cost(get_cost, validSet, options)
-        testCost = calculate_cost(get_cost, testSet, options)
+        validCost, _ = calculate_cost(get_cost, validSet, options)
+        testCost, predLabels = calculate_cost(get_cost, testSet, options, get_probs)
         buf = 'Epoch:%d, Duration:%f, Train_Cost:%f, Valid_Cost:%f, Test_Cost:%f' % (epoch, duration, trainCost, validCost, testCost)
         print buf
         print2file(buf, logFile)
@@ -374,6 +368,7 @@ def train_GRAM(
             bestTrainCost = trainCost
             bestEpoch = epoch
             tempParams = unzip(tparams)
+            pickle.dump(predLabels, open(outFile + '_' + str(round(_TRAIN_RATIO,2)) + '_' + str(epoch) + '.test_probs', 'wb'), -1)
             np.savez_compressed(outFile + '.' + str(epoch), **tempParams)
     buf = 'Best Epoch:%d, Avg_Duration:%f, Train_Cost:%f, Valid_Cost:%f, Test_Cost:%f' % (bestEpoch, epochDuration/max_epochs, bestTrainCost, bestValidCost, bestTestCost)
     print buf
@@ -394,6 +389,7 @@ def parse_arguments(parser):
     parser.add_argument('--dropout_rate', type=float, default=0.5, help='Dropout rate used for the hidden layer of RNN (default value: 0.5)')
     parser.add_argument('--log_eps', type=float, default=1e-8, help='A small value to prevent log(0) (default value: 1e-8)')
     parser.add_argument('--verbose', action='store_true', help='Print output after every 100 mini-batches (default false)')
+    parser.add_argument('--train_ratio', type=float)
     args = parser.parse_args()
     return args
 
@@ -408,44 +404,33 @@ def calculate_dimSize(seqFile):
 
 def get_rootCode(treeFile):
     tree = pickle.load(open(treeFile, 'rb'))
-    #print(tree.values()[0]) # [4462, 5622, 5621]
     rootCode = tree.values()[0][1]
     return rootCode
 
 if __name__ == '__main__':
-    print(datetime.now())
-
-    # parse arguments
     parser = argparse.ArgumentParser()
     args = parse_arguments(parser)
-
-    # x: (max_seq_length, number of seqs, inputDimSize)
-    inputDimSize = calculate_dimSize(args.seq_file) # number of unique codes
-    #numClass = calculate_dimSize(args.label_file)
-    numClass = 1 # only the heart failture class for label
+    inputDimSize = calculate_dimSize(args.seq_file)
+    numClass = 1 # predicte a binary value (heart failure)
     numAncestors = get_rootCode(args.tree_file+'.level2.pk') - inputDimSize + 1
-    
-    # print(get_rootCode(args.tree_file+'.level2.pk')) # 5622
-    # print(numAncestors) # 729
 
     train_GRAM(
-        seqFile=args.seq_file, 
+        seqFile=args.seq_file,
         inputDimSize=inputDimSize,
         treeFile=args.tree_file,
-        numAncestors=numAncestors, 
-        labelFile=args.label_file, 
+        numAncestors=numAncestors,
+        labelFile=args.label_file,
         numClass=numClass,
-        outFile=args.out_file, 
-        embFile=args.embed_file, 
-        embDimSize=args.embed_size, 
+        outFile=args.out_file,
+        embFile=args.embed_file,
+        embDimSize=args.embed_size,
         hiddenDimSize=args.rnn_size,
         attentionDimSize=args.attention_size,
-        batchSize=args.batch_size, 
-        max_epochs=1,#args.n_epochs, 
-        L2=args.L2, 
-        dropoutRate=args.dropout_rate, 
-        logEps=args.log_eps, 
-        verbose=args.verbose
+        batchSize=args.batch_size,
+        max_epochs=1,#args.n_epochs,
+        L2=args.L2,
+        dropoutRate=args.dropout_rate,
+        logEps=args.log_eps,
+        verbose=args.verbose,
+        train_ratio= args.train_ratio
     )
-
-    print(datetime.now())
