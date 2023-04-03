@@ -13,6 +13,8 @@ import theano.tensor as T
 from theano import config
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
+from datetime import datetime
+
 _TEST_RATIO = 0.2
 _VALIDATION_RATIO = 0.1
 
@@ -103,7 +105,7 @@ def generate_attention(tparams, leaves, ancestors):
     preAttention = T.dot(mlpOutput, tparams['v_attention'])
     attention = T.nnet.softmax(preAttention)
     return attention
-    
+
 def softmax_layer(tparams, emb):
     nom = T.exp(T.dot(emb, tparams['W_output']) + tparams['b_output'])
     denom = nom.sum(axis=2, keepdims=True)
@@ -287,11 +289,13 @@ def train_GRAM(
     logEps=1e-8,
     verbose=False
 ):
+    print(datetime.now())
+
     options = locals().copy()
 
     leavesList = []
     ancestorsList = []
-    for i in range(5, 0, -1): # An ICD9 diagnosis code can have at most five ancestors (including the artificial root) when using CCS multi-level grouper. 
+    for i in range(5, 0, -1): # An ICD9 diagnosis code can have at most five ancestors (including the artificial root) when using CCS multi-level grouper.
         leaves, ancestors = build_tree(treeFile+'.level'+str(i)+'.pk')
         sharedLeaves = theano.shared(leaves, name='leaves'+str(i))
         sharedAncestors = theano.shared(ancestors, name='ancestors'+str(i))
@@ -304,7 +308,7 @@ def train_GRAM(
     use_noise, x, y, mask, lengths, cost, cost_noreg, y_hat =  build_model(tparams, leavesList, ancestorsList, options)
     get_cost = theano.function(inputs=[x, y, mask, lengths], outputs=cost_noreg, name='get_cost')
     print 'done!!'
-    
+
     print 'Constructing the optimizer ... ',
     grads = T.grad(cost, wrt=tparams.values())
     f_grad_shared, f_update = adadelta(tparams, grads, x, y, mask, lengths, cost)
@@ -392,6 +396,7 @@ def get_rootCode(treeFile):
     return rootCode
 
 if __name__ == '__main__':
+    print(datetime.now())
     parser = argparse.ArgumentParser()
     args = parse_arguments(parser)
 
@@ -418,3 +423,5 @@ if __name__ == '__main__':
         logEps=args.log_eps, 
         verbose=args.verbose
     )
+
+    print(datetime.now())
