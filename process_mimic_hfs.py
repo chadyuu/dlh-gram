@@ -11,17 +11,20 @@
 # <output file>.types: Python dictionary that maps string diagnosis codes to integer diagnosis codes.
 
 
+# $ python process_mimic_hfs.py ADMISSIONS.csv DIAGNOSES_ICD.csv output/output
+
 '''
 # output
 seqs.pkl: a list of visit for each patient
+types.pkl: the map from ICD9 codes to ICD-9 labels
 hfs.pkl: the heart failure label
 
-
-# probably no need
+# no need
 pids.pkl: patient ids
 vids.pkl: a list of visit ides for each patient
-types.pkl: the map from ICD9 codes to ICD-9 labels
 rtypes.pkl: the map from ICD9 labels to ICD9 codes
+3digitICD9.seqs
+3digitICD9.types
 '''
 
 import sys
@@ -88,30 +91,31 @@ if __name__ == '__main__':
 
     print 'Building pid-sortedVisits mapping'
     pidSeqMap = {}
-    pidSeqMap_3digit = {}
+    #pidSeqMap_3digit = {}
     for pid, admIdList in pidAdmMap.iteritems():
         if len(admIdList) < 2: continue
 
         sortedList = sorted([(admDateMap[admId], admDxMap[admId]) for admId in admIdList])
         pidSeqMap[pid] = sortedList
 
-        sortedList_3digit = sorted([(admDateMap[admId], admDxMap_3digit[admId]) for admId in admIdList])
-        pidSeqMap_3digit[pid] = sortedList_3digit
+        #sortedList_3digit = sorted([(admDateMap[admId], admDxMap_3digit[admId]) for admId in admIdList])
+        #pidSeqMap_3digit[pid] = sortedList_3digit
     
     print 'Building pids, dates, strSeqs'
-    pids = []
-    dates = []
+    #pids = []
+    #dates = []
     seqs = []
     for pid, visits in pidSeqMap.iteritems():
-        pids.append(pid)
+        #pids.append(pid)
         seq = []
         date = []
         for visit in visits:
             date.append(visit[0])
             seq.append(visit[1])
-        dates.append(date)
+        #dates.append(date)
         seqs.append(seq)
     
+    '''
     print 'Building pids, dates, strSeqs for 3digit ICD9 code'
     seqs_3digit = []
     for pid, visits in pidSeqMap_3digit.iteritems():
@@ -119,6 +123,7 @@ if __name__ == '__main__':
         for visit in visits:
             seq.append(visit[1])
         seqs_3digit.append(seq)
+    '''
     
     print 'Converting strSeqs to intSeqs, and making types'
     types = {}
@@ -130,22 +135,29 @@ if __name__ == '__main__':
         for visit in patient:
             newVisit = []
             for code in visit:
+                # print code: hf = start with D_428*
+                # Filter out heart failure diagnoses using ICD-9 codes starting with '428'
+                if code.startswith('D_428'):
+                    hf_label = 1
+                    # omit all the visits after heart failure
+                    break
+
                 if code in types:
                     newVisit.append(types[code])
                 else:
                     types[code] = len(types)
                     newVisit.append(types[code])
-                
-                # print code: hf = start with D_428*
-                # Filter out heart failure diagnoses using ICD-9 codes starting with '428'
-                if code.startswith('D_428'):
-                    hf_label = 1
+            if hf_label == 1:
+                # omit all the visits after heart failure
+                break
 
-            newPatient.append(newVisit)
-        newSeqs.append(newPatient)
-        hf_labels.append(hf_label)
+            if newVisit != []:
+                newPatient.append(newVisit)
+        if newPatient != []:
+            newSeqs.append(newPatient)
+            hf_labels.append(hf_label)
 
-    
+    '''
     print 'Converting strSeqs to intSeqs, and making types for 3digit ICD9 code'
     types_3digit = {}
     newSeqs_3digit = []
@@ -161,14 +173,15 @@ if __name__ == '__main__':
                     newVisit.append(types_3digit[code])
             newPatient.append(newVisit)
         newSeqs_3digit.append(newPatient)
+    '''
 
 
-    pickle.dump(pids, open(outFile+'.pids', 'wb'), -1)
-    pickle.dump(dates, open(outFile+'.dates', 'wb'), -1)
+    #pickle.dump(pids, open(outFile+'.pids', 'wb'), -1)
+    #pickle.dump(dates, open(outFile+'.dates', 'wb'), -1)
     pickle.dump(newSeqs, open(outFile+'.seqs', 'wb'), -1)
     pickle.dump(types, open(outFile+'.types', 'wb'), -1)
-    pickle.dump(newSeqs_3digit, open(outFile+'.3digitICD9.seqs', 'wb'), -1)
-    pickle.dump(types_3digit, open(outFile+'.3digitICD9.types', 'wb'), -1)
+    #pickle.dump(newSeqs_3digit, open(outFile+'.3digitICD9.seqs', 'wb'), -1)
+    #pickle.dump(types_3digit, open(outFile+'.3digitICD9.types', 'wb'), -1)
 
-    print hf_labels
-    pickle.dump(hf_labels, open('hfs.pkl', 'wb'), -1)
+    #print hf_labels
+    pickle.dump(hf_labels, open(outFile+'.hfs', 'wb'), -1)

@@ -369,7 +369,7 @@ def train_GRAM(
             bestEpoch = epoch
             tempParams = unzip(tparams)
             pickle.dump(predLabels, open(outFile + '_' + str(round(_TRAIN_RATIO,2)) + '_' + str(epoch) + '.test_probs', 'wb'), -1)
-            np.savez_compressed(outFile + '.' + str(epoch), **tempParams)
+            # np.savez_compressed(outFile + '.' + str(epoch), **tempParams)
     buf = 'Best Epoch:%d, Avg_Duration:%f, Train_Cost:%f, Valid_Cost:%f, Test_Cost:%f' % (bestEpoch, epochDuration/max_epochs, bestTrainCost, bestValidCost, bestTestCost)
     print buf
     print2file(buf, logFile)

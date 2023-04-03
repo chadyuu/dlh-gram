@@ -14,14 +14,78 @@ Our to-do list is like
 6. calculate AUC for RNN
 7. conduct ablations by the final submission
 
-### Datasets
+## Datasets
 - ADMISSIONS.csv
 - DIAGNOSES_ICD.csv
 - ccs_multi_dx_tool_2015.csv
 
-### Basic workflows
 
-confirmed python2.7 works.
+## Basic workflow for the heart failure prediction
+
+```
+$ python --version
+Python 2.7.13
+````
+
+```
+$ python process_mimic_hfs.py ADMISSIONS.csv DIAGNOSES_ICD.csv output/output
+```
+outputs in `ouput` directory:
+
+- output.hfs
+- output.seqs
+- output.types
+
+```
+$ python build_trees.py ccs_multi_dx_tool_2015.csv output/output.seqs output/output.types output2/output2
+```
+outputs in `output2` directory:
+
+- output2.level1.pk
+- output2.level2.pk
+- output2.level3.pk
+- output2.level4.pk
+- output2.level5.pk
+- output2.seqs
+- output2.types
+
+```
+$ python run_10times.py
+```
+outputs in `gram_hf` directory:
+
+- gram_hf_{train_ratio}.test_set
+- gram_hf_{train_ratio}_{epoch_id}.test_probs
+
+```
+$ cd auc
+$ python --version
+Python 3.10.1
+
+$ python auc.py 
+```
+
+shows like
+
+```
+AUC: 0.69, train_ratio: 0.07
+AUC: 0.69, train_ratio: 0.14
+AUC: 0.69, train_ratio: 0.21
+AUC: 0.70, train_ratio: 0.28
+AUC: 0.71, train_ratio: 0.35
+AUC: 0.72, train_ratio: 0.42
+AUC: 0.72, train_ratio: 0.49
+AUC: 0.72, train_ratio: 0.56
+AUC: 0.73, train_ratio: 0.63
+AUC: 0.73, train_ratio: 0.7
+```
+
+
+----------------------
+
+## Basic workflows for the sequential diagnoses prediction
+
+confirmed python2.7 (2.7.13) works.
 not yet python3.x
 
 #### Data preprocessing

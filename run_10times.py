@@ -6,8 +6,8 @@ if __name__ == '__main__':
         print(train_ratio)
         seq_file = 'output2/output2.seqs'
         tree_file = 'output2/output2'
-        label_file = 'hfs.pkl'
-        out_file = 'gram_hf'
+        label_file = 'output/output.hfs'
+        out_file = 'gram_hf/gram_hf'
         inputDimSize = gram_hf.calculate_dimSize(seq_file)
         numClass = 1 # predicte a binary value (heart failure)
         numAncestors = gram_hf.get_rootCode(tree_file+'.level2.pk') - inputDimSize + 1
