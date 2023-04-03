@@ -10,6 +10,7 @@ from theano.ifelse import ifelse
 import cPickle as pickle
 
 from collections import OrderedDict
+from datetime import datetime
 
 def numpy_floatX(data):
 	return np.asarray(data, dtype=config.floatX)
@@ -137,6 +138,7 @@ def get_rootCode(treeFile):
 	return tree.values()[0][1]
 
 if __name__=='__main__':
+	print(datetime.now())
 	infile = sys.argv[1]
 	treeFile = sys.argv[2]
 	outfile = sys.argv[3]
@@ -144,5 +146,6 @@ if __name__=='__main__':
 	inputDimSize = get_rootCode(treeFile+'.level2.pk') + 1
 	embDimSize = 128
 	batchSize = 100
-	maxEpochs = 50
+	maxEpochs = 1#50
 	train_glove(infile, inputSize=inputDimSize, batchSize=batchSize, dimensionSize=embDimSize, maxEpochs=maxEpochs, outfile=outfile)
+	print(datetime.now())
