@@ -97,16 +97,16 @@ AUC: 0.94, train_ratio: 0.7
 
 ### gram_hf_no_attention
 
-AUC: 0.69, train_ratio: 0.07
-AUC: 0.71, train_ratio: 0.14
-AUC: 0.71, train_ratio: 0.21
-AUC: 0.72, train_ratio: 0.28
-AUC: 0.75, train_ratio: 0.35
-AUC: 0.75, train_ratio: 0.42
-AUC: 0.75, train_ratio: 0.49
-AUC: 0.77, train_ratio: 0.56
-AUC: 0.76, train_ratio: 0.63
-AUC: 0.77, train_ratio: 0.7
+AUC: 0.70, train_ratio: 0.07
+AUC: 0.91, train_ratio: 0.14
+AUC: 0.91, train_ratio: 0.21
+AUC: 0.93, train_ratio: 0.28
+AUC: 0.94, train_ratio: 0.35
+AUC: 0.94, train_ratio: 0.42
+AUC: 0.94, train_ratio: 0.49
+AUC: 0.94, train_ratio: 0.56
+AUC: 0.95, train_ratio: 0.63
+AUC: 0.94, train_ratio: 0.7
 
 
 
