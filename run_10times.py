@@ -1,6 +1,5 @@
 import numpy as np
 import gram_hf
-#import gram_hf_no_attention as gram_hf
 
 if __name__ == '__main__':
     for train_ratio in np.arange(0.07,0.77,0.07):
@@ -9,7 +8,6 @@ if __name__ == '__main__':
         tree_file = 'output2/output2'
         label_file = 'output/output.hfs'
         out_file = 'gram_hf/gram_hf'
-        #out_file = 'gram_hf_no_attention/gram_hf' # for no attention
         inputDimSize = gram_hf.calculate_dimSize(seq_file)
         numClass = 1 # predicte a binary value (heart failure)
         numAncestors = gram_hf.get_rootCode(tree_file+'.level2.pk') - inputDimSize + 1
