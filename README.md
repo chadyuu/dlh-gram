@@ -100,7 +100,10 @@ AUC: 0.94, train_ratio: 0.56
 AUC: 0.95, train_ratio: 0.63
 AUC: 0.94, train_ratio: 0.7
 
+### rnn.ipynb (NaiveRNN)
 
+AUC: 0.85, train_ratio: 0.07
+AUC: 0.89, train_ratio: 0.14
 
 ----------------------
 
