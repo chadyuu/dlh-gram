@@ -105,7 +105,10 @@ AUC: 0.94, train_ratio: 0.7
 AUC: 0.85, train_ratio: 0.07
 AUC: 0.89, train_ratio: 0.14
 AUC: 0.8953, train_ratio: 0.21
-AUD: 0.9079, train_ratio: 0.28
+AUC: 0.9079, train_ratio: 0.28
+AUC: 0.9176, train_ratio: 0.35
+AUC: 0.9236, train_ratio: 0.42
+AUC: 0.9231, train_ratio: 0.49
 
 ----------------------
 
