@@ -1,4 +1,4 @@
-GRAM
+Reproduction of GRAM (graph-based attention model)
 =========================================
 
 ## Jupyter Notebook
