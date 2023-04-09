@@ -1,6 +1,10 @@
 Reproduction of GRAM (graph-based attention model)
 =========================================
 
+## Reference
+
+Edward Choi, Mohammad Taha Bahadori, Le Song, Walter F Stewart, and Jimeng Sun. 2017. Gram: graph-based attention model for healthcare representation learning. In Proceedings of the 23rd ACM SIGKDD international conference on knowledge discovery and data mining, pages 787–795.
+
 ## Jupyter Notebook
 - gram.ipynb
 - RNN/rnn.ipynb
