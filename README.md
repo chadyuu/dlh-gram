@@ -117,6 +117,12 @@ AUC: 0.9260, train_ratio: 0.56
 AUC: 0.9210, train_ratio: 0.63
 AUC: 0.9200, train_ratio: 0.70
 
+## Hyperparameter tuning
+```
+python hyperparams_tunining.py # train the model
+python auc/auc_hyperparam.py # calculate AUC
+```
+
 ----------------------
 
 ## Basic workflows for the sequential diagnoses prediction
