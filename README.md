@@ -154,7 +154,7 @@ Here are the calculated AUC:
 
 ## Comparison with NaiveRNN
 
-See `RNN/rnn.ipynb`.
+See [RNN/rnn.ipynb](RNN/rnn.ipynb).
 
 Here are the AUC for NaiveRNN.
 
@@ -171,7 +171,7 @@ Here are the AUC for NaiveRNN.
 
 
 ## Appendix
-You can see a sample workflow in `gram.ipynb`.
+You can see a sample workflow in [gram.ipynb](gram.ipynb).
 
 
 ## Contributing
