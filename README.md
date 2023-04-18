@@ -1,27 +1,41 @@
-Reproduction of GRAM (graph-based attention model)
+Reproduction of GRAM (graph-based attention model) for the heart failure prediction
 =========================================
 
 ## Reference
 
 Edward Choi, Mohammad Taha Bahadori, Le Song, Walter F Stewart, and Jimeng Sun. 2017. Gram: graph-based attention model for healthcare representation learning. In Proceedings of the 23rd ACM SIGKDD international conference on knowledge discovery and data mining, pages 787–795.
 
-## Jupyter Notebook
-- gram.ipynb
-- RNN/rnn.ipynb
+## Requirements
+
+### Train the GRAM model
+
+We use Python [2.7.13](.python-version) with Pyenv.
+
+To install requirements:
+```
+pip install -r requirements.txt
+```
+
+### Calculate AUC
+
+We use Python [3.10.1](auc/.python-version) with Pyenv.
+
+To install requirements:
+```
+cd auc
+pip install -r requirements.txt
+```
 
 ## Datasets
+
+You can download the following necessary datasets from https://physionet.org/content/mimiciii/1.4/ after obtaining the access privilege.
 
 - ADMISSIONS.csv
 - DIAGNOSES_ICD.csv
 - ccs_multi_dx_tool_2015.csv
 
 
-## Basic workflow for the heart failure prediction
-
-```
-$ python --version
-Python 2.7.13
-````
+## Preprocess the data 
 
 ```
 $ python process_mimic_hfs.py ADMISSIONS.csv DIAGNOSES_ICD.csv output/output
@@ -33,6 +47,7 @@ outputs in `ouput` directory:
 - output.types
 
 ```
+# Build files that contain the ancestor information of each medical code
 $ python build_trees.py ccs_multi_dx_tool_2015.csv output/output.seqs output/output.types output2/output2
 ```
 outputs in `output2` directory:
@@ -45,6 +60,8 @@ outputs in `output2` directory:
 - output2.seqs
 - output2.types
 
+## Train the GRAM model and generate predictions
+
 ```
 $ python run_10times.py
 ```
@@ -53,127 +70,109 @@ outputs in `gram_hf` directory:
 - gram_hf_{train_ratio}.test_set
 - gram_hf_{train_ratio}_{epoch_id}.test_probs
 
+
+As an alation, we removed the attention mechanism:
+
+```
+$ python run_10times_no_attention.py
+```
+outputs in `gram_hf_no_attention` directory:
+
+- gram_hf_{train_ratio}.test_set
+- gram_hf_{train_ratio}_{epoch_id}.test_probs
+
+
+## Evaluate predictions
 ```
 $ cd auc
-$ python --version
-Python 3.10.1
-
 $ python auc.py 
 ```
 
-shows like
-
-```
-AUC: 0.69, train_ratio: 0.07
-AUC: 0.69, train_ratio: 0.14
-AUC: 0.69, train_ratio: 0.21
-AUC: 0.70, train_ratio: 0.28
-AUC: 0.71, train_ratio: 0.35
-AUC: 0.72, train_ratio: 0.42
-AUC: 0.72, train_ratio: 0.49
-AUC: 0.72, train_ratio: 0.56
-AUC: 0.73, train_ratio: 0.63
-AUC: 0.73, train_ratio: 0.7
-```
-
-## results with 100 epochs
+## results
 
 ### gram_hf
 
-AUC: 0.70, train_ratio: 0.07
-AUC: 0.84, train_ratio: 0.14
-AUC: 0.91, train_ratio: 0.21
-AUC: 0.93, train_ratio: 0.28
-AUC: 0.94, train_ratio: 0.35
-AUC: 0.92, train_ratio: 0.42
-AUC: 0.94, train_ratio: 0.49
-AUC: 0.94, train_ratio: 0.56
-AUC: 0.95, train_ratio: 0.63
-AUC: 0.94, train_ratio: 0.7
+- AUC: 0.695, train_ratio: 0.07
+- AUC: 0.844, train_ratio: 0.14
+- AUC: 0.909, train_ratio: 0.21
+- AUC: 0.926, train_ratio: 0.28
+- AUC: 0.936, train_ratio: 0.35
+- AUC: 0.923, train_ratio: 0.42
+- AUC: 0.937, train_ratio: 0.49
+- AUC: 0.940, train_ratio: 0.56
+- AUC: 0.947, train_ratio: 0.63
+- AUC: 0.944, train_ratio: 0.7
 
 ### gram_hf_no_attention
 
-AUC: 0.70, train_ratio: 0.07
-AUC: 0.91, train_ratio: 0.14
-AUC: 0.91, train_ratio: 0.21
-AUC: 0.93, train_ratio: 0.28
-AUC: 0.94, train_ratio: 0.35
-AUC: 0.94, train_ratio: 0.42
-AUC: 0.94, train_ratio: 0.49
-AUC: 0.94, train_ratio: 0.56
-AUC: 0.95, train_ratio: 0.63
-AUC: 0.94, train_ratio: 0.7
+- AUC: 0.698, train_ratio: 0.07
+- AUC: 0.911, train_ratio: 0.14
+- AUC: 0.912, train_ratio: 0.21
+- AUC: 0.929, train_ratio: 0.28
+- AUC: 0.941, train_ratio: 0.35
+- AUC: 0.938, train_ratio: 0.42
+- AUC: 0.944, train_ratio: 0.49
+- AUC: 0.943, train_ratio: 0.56
+- AUC: 0.945, train_ratio: 0.63
+- AUC: 0.943, train_ratio: 0.7
 
-### rnn.ipynb (NaiveRNN) for HF
-
-AUC: 0.85, train_ratio: 0.07
-AUC: 0.89, train_ratio: 0.14
-AUC: 0.8953, train_ratio: 0.21
-AUC: 0.9079, train_ratio: 0.28
-AUC: 0.9176, train_ratio: 0.35
-AUC: 0.9236, train_ratio: 0.42
-AUC: 0.9231, train_ratio: 0.49
-AUC: 0.9260, train_ratio: 0.56
-AUC: 0.9210, train_ratio: 0.63
-AUC: 0.9200, train_ratio: 0.70
 
 ## Hyperparameter tuning
-```
-python hyperparams_tunining.py # train the model
-python auc/auc_hyperparam.py # calculate AUC
-```
-
-----------------------
-
-## Basic workflows for the sequential diagnoses prediction
-
-confirmed python2.7 (2.7.13) works.
-not yet python3.x
-
-#### Data preprocessing
 
 ```
-$ python process_mimic.py ADMISSIONS.csv DIAGNOSES_ICD.csv output
+# Train the model, output results in the `hyperparam` directory.
+python hyperparams_tunining.py 
+
+# Calculate AUC
+cd auc
+python auc_hyperparam.py
 ```
+Here are the calculated AUC:
 
-output
+- AUC: 0.878 for default_0.7.test_set
+- AUC: 0.855 for embDimSize100_0.7.test_set
+- AUC: 0.890 for embDimSize300_0.7.test_set
+- AUC: 0.894 for embDimSize400_0.7.test_set
+- AUC: 0.893 for embDimSize500_0.7.test_set
+- AUC: 0.900 for hiddenDimSize200_0.7.test_set
+- AUC: 0.908 for hiddenDimSize300_0.7.test_set
+- AUC: 0.923 for hiddenDimSize400_0.7.test_set
+- AUC: 0.917 for hiddenDimSize500_0.7.test_set
+- AUC: 0.887 for attentionDimSize200_0.7.test_set
+- AUC: 0.877 for attentionDimSize300_0.7.test_set
+- AUC: 0.861 for attentionDimSize400_0.7.test_set
+- AUC: 0.873 for attentionDimSize500_0.7.test_set
+- AUC: 0.884 for L20.0001_0.7.test_set
+- AUC: 0.872 for L20.01_0.7.test_set
+- AUC: 0.864 for L20.1_0.7.test_set
+- AUC: 0.484 for dropoutRate0.0_0.7.test_set
+- AUC: 0.869 for dropoutRate0.2_0.7.test_set
+- AUC: 0.873 for dropoutRate0.4_0.7.test_set
+- AUC: 0.889 for dropoutRate0.8_0.7.test_set
+- AUC: 0.921 for embDimSize500_hiddenDimSize500_0.7.test_set
+- AUC: 0.921 for best_0.7.test_set
 
-- output.3digitICD9.seqs
-- output.3digitICD9.types
-- output.dates
-- output.pids
-- output.seqs
-- output.types
+## Comparison with NaiveRNN
 
-#### Build files that contain the ancestor information of each medical code
+See `RNN/rnn.ipynb`.
 
-```
-$ python build_trees.py ccs_multi_dx_tool_2015.csv output.seqs output.types output2
-```
-output
-- output2.level1.pk
-- output2.level2.pk
-- output2.level3.pk
-- output2.level4.pk
-- output2.level5.pk
-- output2.seqs
-- output2.types
+Here are the AUC for NaiveRNN.
+
+- AUC: 0.85, train_ratio: 0.07
+- AUC: 0.89, train_ratio: 0.14
+- AUC: 0.8953, train_ratio: 0.21
+- AUC: 0.9079, train_ratio: 0.28
+- AUC: 0.9176, train_ratio: 0.35
+- AUC: 0.9236, train_ratio: 0.42
+- AUC: 0.9231, train_ratio: 0.49
+- AUC: 0.9260, train_ratio: 0.56
+- AUC: 0.9210, train_ratio: 0.63
+- AUC: 0.9200, train_ratio: 0.70
 
 
-#### Run GRAM (train)
-```
-$ python gram.py output2.seqs output.3digitICD9.seqs output2 output3
-```
-output
-- output3.*.npz
+## Appendix
+You can see a sample workflow in `gram.ipynb`.
 
 
-### Pretrain the code embedding
-This is for GRAM+ and RNN+, so we do not need to pretrain the code embedding.
-```
-$ python create_glove_comap.py output2.seqs output2 output_pretrain
-``` 
-output
-- cooccurrenceMa.pk
-- output_pretrain2.0.npz
-- output_pretrain2.1.npz
+## Contributing
+If you'd like to contribute, or have any suggestions for these guidelines, you can contact us at yutaron2@illinois.edu or open an issue on this GitHub repository.
