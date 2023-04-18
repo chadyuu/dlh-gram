@@ -1,0 +1,6 @@
+Epoch:0, Duration:12.177816, Train_Cost:0.647768, Valid_Cost:0.536243, Test_Cost:0.493310
+Epoch:1, Duration:12.339224, Train_Cost:0.570731, Valid_Cost:0.518706, Test_Cost:0.486453
+Epoch:2, Duration:12.307639, Train_Cost:0.534188, Valid_Cost:0.498042, Test_Cost:0.445167
+Epoch:3, Duration:12.324813, Train_Cost:0.511874, Valid_Cost:0.485034, Test_Cost:0.437686
+Epoch:4, Duration:16.401006, Train_Cost:0.491118, Valid_Cost:0.465700, Test_Cost:0.432930
+Best Epoch:4, Avg_Duration:13.110100, Train_Cost:0.491118, Valid_Cost:0.465700, Test_Cost:0.432930

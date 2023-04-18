@@ -1,0 +1,11 @@
+Epoch:0, Duration:17.902868, Train_Cost:0.758738, Valid_Cost:0.583743, Test_Cost:0.505625
+Epoch:1, Duration:18.010663, Train_Cost:0.686942, Valid_Cost:0.517397, Test_Cost:0.473687
+Epoch:2, Duration:17.907610, Train_Cost:0.643737, Valid_Cost:0.500632, Test_Cost:0.450115
+Epoch:3, Duration:17.686516, Train_Cost:0.588316, Valid_Cost:0.481419, Test_Cost:0.447237
+Epoch:4, Duration:17.755801, Train_Cost:0.562568, Valid_Cost:0.482005, Test_Cost:0.439863
+Epoch:5, Duration:17.618272, Train_Cost:0.531759, Valid_Cost:0.446161, Test_Cost:0.424141
+Epoch:6, Duration:17.734465, Train_Cost:0.487145, Valid_Cost:0.400518, Test_Cost:0.404924
+Epoch:7, Duration:17.743253, Train_Cost:0.425110, Valid_Cost:0.359961, Test_Cost:0.384319
+Epoch:8, Duration:17.742605, Train_Cost:0.365169, Valid_Cost:0.312353, Test_Cost:0.352638
+Epoch:9, Duration:17.906151, Train_Cost:0.329869, Valid_Cost:0.274292, Test_Cost:0.311518
+Best Epoch:9, Avg_Duration:17.800820, Train_Cost:0.329869, Valid_Cost:0.274292, Test_Cost:0.311518
