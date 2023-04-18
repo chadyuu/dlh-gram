@@ -47,9 +47,9 @@ def get_auc(dir):
             y_true_labels[i] = y > 0.5
         auc = roc_auc_score(y_true_labels, y_pred_probs)
 
-        print(f"AUC: {auc:.2f}, train_ratio: {round(train_ratio,2)}")
+        print(f"AUC: {auc:.3f}, train_ratio: {round(train_ratio,2)}")
         
-        overleaf_string = overleaf_string + " & " + str(round(auc,2)) 
+        overleaf_string = overleaf_string + " & " + str(round(auc,3)) 
 
     print("overleaf_string" + overleaf_string)  # For final report
 
