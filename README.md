@@ -9,7 +9,7 @@ Edward Choi, Mohammad Taha Bahadori, Le Song, Walter F Stewart, and Jimeng Sun. 
 
 ### Train the GRAM model
 
-We use Python [2.7.13](.python-version) with Pyenv.
+For this step we used Python [2.7.13](.python-version) with Pyenv.
 
 To install requirements:
 ```
@@ -18,7 +18,7 @@ pip install -r requirements.txt
 
 ### Calculate AUC
 
-We use Python [3.10.1](auc/.python-version) with Pyenv.
+For this step we used Python [3.10.1](auc/.python-version) with Pyenv.
 
 To install requirements:
 ```
@@ -71,7 +71,7 @@ outputs in `gram_hf` directory:
 - gram_hf_{train_ratio}_{epoch_id}.test_probs
 
 
-As an alation, we removed the attention mechanism:
+As an ablation, we removed the attention mechanism:
 
 ```
 $ python run_10times_no_attention.py
@@ -88,7 +88,7 @@ $ cd auc
 $ python auc.py 
 ```
 
-## results
+## Results
 
 ### gram_hf
 
