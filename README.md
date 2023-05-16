@@ -34,6 +34,7 @@ You can download the following necessary datasets from https://physionet.org/con
 - DIAGNOSES_ICD.csv
 - ccs_multi_dx_tool_2015.csv
 
+Place these CSV files in the root directory.
 
 ## Preprocess the data 
 
